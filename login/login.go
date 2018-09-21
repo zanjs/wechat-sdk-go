@@ -93,6 +93,16 @@ func (m *WxConfig) WexLogin(code, encryptedData, iv string) (wxUserInfo *WechatE
 	return wXBizDataCrypt.WeDecryptData(encryptedData, iv)
 }
 
+// LoginCodeX 通过Code小程序登录
+func (m *WxConfig) LoginCodeX(code string) (wxUserInfo *WxUserInfo, err error) {
+	accessToken, err := m.GetWxAccessTokenX(code)
+
+	if err != nil {
+		return wxUserInfo, err
+	}
+	return accessToken.GetUserInfo()
+}
+
 // WemLogin 微信网页登录，在微信网页授权，需要认证公众号
 func (m *WxConfig) WemLogin(code string) (wxUserInfo *WxUserInfo, err error) {
 	return m.LoginCode(code)
@@ -106,6 +116,43 @@ func (m *WxConfig) LoginCode(code string) (wxUserInfo *WxUserInfo, err error) {
 		return wxUserInfo, err
 	}
 	return accessToken.GetUserInfo()
+}
+
+// GetWxAccessTokenX 通过code获取AccessToken JS Code
+func (m *WxConfig) GetWxAccessTokenX(code string) (accessToken *WxAccessToken, err error) {
+
+	if code == "" {
+		return accessToken, errors.New("GetWxAccessToken error: code is null")
+	}
+
+	params := url.Values{
+		"js_code":    []string{code},
+		"grant_type": []string{"authorization_code"},
+	}
+
+	t, err := utils.Struct2Map(m)
+	if err != nil {
+		return accessToken, err
+	}
+
+	for k, v := range t {
+		params.Set(k, v)
+	}
+
+	body, err := utils.NewRequest("GET", common.JsCode2SessionURL, []byte(params.Encode()))
+	if err != nil {
+		return accessToken, err
+	}
+
+	err = json.Unmarshal(body, &accessToken)
+	if err != nil {
+		return accessToken, err
+	}
+	if accessToken.ErrMsg != "" {
+		return accessToken, errors.New(accessToken.ErrMsg)
+	}
+
+	return
 }
 
 // GetWxAccessToken 通过code获取AccessToken
