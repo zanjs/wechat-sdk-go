@@ -94,13 +94,13 @@ func (m *WxConfig) WexLogin(code, encryptedData, iv string) (wxUserInfo *WechatE
 }
 
 // LoginCodeX 通过Code小程序登录
-func (m *WxConfig) LoginCodeX(code string) (wxUserInfo *WxUserInfo, err error) {
-	accessToken, err := m.GetWxAccessTokenX(code)
+func (m *WxConfig) LoginCodeX(code string) (accessToken *WXBizDataCrypt, err error) {
+	accessToken, err = m.GetJsCode2Session(code)
 
 	if err != nil {
-		return wxUserInfo, err
+		return accessToken, err
 	}
-	return accessToken.GetUserInfo()
+	return accessToken, nil
 }
 
 // WemLogin 微信网页登录，在微信网页授权，需要认证公众号
